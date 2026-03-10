@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR Database Schema</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f3ef;
+  --surface: #ffffff;
+  --surface2: #f9f8f5;
+  --border: #e8e5de;
+  --border2: #d4cfc4;
+  --text: #1a1814;
+  --muted: #8a8478;
+  --muted2: #b5b0a6;
+
+  --c-emp:   #2d5be3;
+  --c-dept:  #0f9e6e;
+  --c-pos:   #d97706;
+  --c-att:   #dc2626;
+  --c-onb:   #7c3aed;
+  --c-badge: #be185d;
+  --c-meet:  #0891b2;
+  --c-inv:   #059669;
+
+  --pk: #d97706;
+  --fk: #2d5be3;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── LAYOUT ── */
+.app { display:flex; height:100vh; overflow:hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.sidebar-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.sidebar-section {
+  padding: 14px 12px 6px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted2);
+}
+
+.table-list { padding: 0 8px 8px; flex:1; overflow-y:auto; }
+
+.tl-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 2px;
+}
+.tl-item:hover { background: var(--surface2); }
+.tl-item.active { background: var(--text); }
+.tl-item.active .tl-name { color: #fff; }
+.tl-item.active .tl-count { color: rgba(255,255,255,0.5); }
+
+.tl-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.tl-name {
+  font-size: 13px;
+  font-weight: 500;
+  flex:1;
+  color: var(--text);
+}
+.tl-count {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--muted);
+}
+
+.sidebar-divider { height:1px; background:var(--border); margin: 8px 12px; }
+
+/* Use case pills */
+.uc-list { padding: 0 8px 16px; }
+.uc-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 2px;
+}
+.uc-item:hover { background: var(--surface2); }
+.uc-item.active { background: var(--surface2); }
+.uc-item.active .uc-label { color: var(--text); }
+.uc-emoji { font-size: 14px; flex-shrink:0; margin-top:1px; }
+.uc-label { font-size: 12px; color: var(--muted); line-height: 1.4; }
+.uc-item.active .uc-label { color: var(--text); font-weight: 500; }
+
+/* ── MAIN PANEL ── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.topbar-left { display:flex; align-items:center; gap: 16px; }
+.topbar-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.breadcrumb {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--muted);
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.breadcrumb span { color: var(--muted2); }
+
+.topbar-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 3px;
+  border: 1px solid var(--border);
+}
+.tab-btn {
+  padding: 5px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--muted);
+  transition: all 0.15s;
+  font-family: 'Outfit', sans-serif;
+}
+.tab-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* ── CONTENT AREA ── */
+.content { flex:1; overflow:auto; padding: 24px; }
+
+/* ── TABLE DETAIL VIEW ── */
+.table-detail { display:none; }
+.table-detail.visible { display:block; }
+
+.td-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.td-icon {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.td-info {}
+.td-name {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.td-meta {
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+/* Fields table */
+.fields-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 28px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.fields-table thead tr {
+  background: var(--surface2);
+}
+.fields-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+.fields-table td {
+  padding: 10px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.fields-table tr:last-child td { border-bottom: none; }
+.fields-table tr:hover td { background: var(--surface2); }
+
+.key-badge {
+  display:inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.05em;
+}
+.key-pk { background: #fef3c7; color: #b45309; }
+.key-fk { background: #dbeafe; color: #1d4ed8; }
+.key-idx { background: #f3e8ff; color: #7c3aed; }
+.key-uq  { background: #dcfce7; color: #166534; }
+
+.field-name-cell {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  font-size: 12.5px;
+}
+.field-type-cell {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+.field-nn { color: #dc2626; font-weight: 600; font-size: 11px; }
+.field-note-cell { font-size: 11.5px; color: var(--muted); }
+
+.ref-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--fk);
+  background: #eff6ff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ref-link:hover { background: #dbeafe; }
+
+/* Relation chips */
+.section-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.rel-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+.rel-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.rel-chip:hover { border-color: var(--border2); box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+.rel-chip-type {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.rel-1n  { background:#fef3c7; color:#b45309; }
+.rel-n1  { background:#dbeafe; color:#1d4ed8; }
+.rel-11  { background:#dcfce7; color:#166534; }
+.rel-mn  { background:#f3e8ff; color:#7c3aed; }
+
+/* ── OVERVIEW / ERD ── */
+.overview { display:none; }
+.overview.visible { display:block; }
+
+.erd-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.erd-canvas {
+  width: 100%;
+  min-height: 520px;
+  position: relative;
+  overflow: auto;
+}
+.erd-svg {
+  position: absolute;
+  top:0;left:0;
+  pointer-events: none;
+}
+.erd-table {
+  position: absolute;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s;
+  min-width: 160px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.erd-table:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  transform: translateY(-2px);
+  z-index: 10;
+}
+.erd-table.highlighted {
+  box-shadow: 0 0 0 2px currentColor, 0 6px 20px rgba(0,0,0,0.12);
+}
+.erd-th {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  display:flex;align-items:center;gap:7px;
+  color: #fff;
+}
+.erd-th-icon { font-size: 13px; }
+.erd-field {
+  padding: 5px 12px;
+  font-size: 10.5px;
+  font-family: 'JetBrains Mono', monospace;
+  display:flex;align-items:center;gap:6px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.erd-field.pk { color: #b45309; font-weight: 600; }
+.erd-field.fk { color: #1d4ed8; }
+
+/* Stats bar */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+.stat-num {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.stat-label {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* Use case map */
+.uc-map-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.uc-map-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid;
+  border-radius: 10px;
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+}
+.uc-map-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.uc-map-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display:flex;align-items:center;gap:8px;
+}
+.uc-map-tables {
+  display:flex;flex-wrap:wrap;gap:5px;
+}
+.uc-map-chip {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: var(--muted);
+}
+
+/* SQL VIEW */
+.sql-view { display:none; }
+.sql-view.visible { display:block; }
+
+.sql-block {
+  background: #1a1814;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.sql-block-header {
+  display:flex;align-items:center;justify-content:space-between;
+  padding: 12px 18px;
+  background: #252118;
+  border-bottom: 1px solid #333028;
+}
+.sql-block-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e8e0d0;
+  display:flex;align-items:center;gap:8px;
+}
+.sql-dot { width:8px;height:8px;border-radius:50%; }
+.copy-btn {
+  font-size: 10px;
+  font-weight: 500;
+  color: #8a8478;
+  background: #333028;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  transition: color 0.15s;
+}
+.copy-btn:hover { color: #e8e0d0; }
+pre {
+  padding: 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  line-height: 1.7;
+  overflow-x: auto;
+  color: #c8c0b0;
+}
+.kw { color: #82aaff; }
+.fn { color: #c3e88d; }
+.str { color: #c3e88d; }
+.cmt { color: #546e7a; font-style:italic; }
+.type { color: #ffcb6b; }
+.num { color: #f78c6c; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius:3px; }
+
+/* EMPTY STATE */
+.empty-state {
+  text-align:center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
+.empty-state .big { font-size: 40px; margin-bottom: 12px; }
+.empty-state p { font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">HR Database</div>
+      <div class="sidebar-sub">8 tables · PostgreSQL</div>
+    </div>
+
+    <div class="sidebar-section">Tables</div>
+    <div class="table-list" id="tableList">
+      <div class="tl-item" onclick="selectTable('employees')" data-table="employees">
+        <span class="tl-dot" style="background:var(--c-emp)"></span>
+        <span class="tl-name">employees</span>
+        <span class="tl-count">13</span>
+      </div>
+      <div class="tl-item" onclick="selectTable('departments')" data-table="departments">
+        <span class="tl-dot" style="background:var(--c-dept)"></span>
+        <span class="tl-name">departments</span>
+        <span class="tl-count">6</span>
+      </div>
+      <div class="tl-item" onclick="selectTable('positions')" data-table="positions">
+        <span class="tl-dot" style="background:var(--c-pos)"></span>
+        <span class="tl-name">positions</span>
+        <span class="tl-count">5</span>
+      </div>
+      <div class="tl-item" onclick="selectTable('attendance_logs')" data-table="attendance_logs">
+        <span class="tl-dot" style="background:var(--c-att)"></span>
+        <span class="tl-name">attendance_logs</span>
+        <span class="tl-count">10</span>
+      </div>
+      <div class="tl-item" onclick="selectTable('onboarding_events')" data-table="onboarding_events">
+        <span class="tl-dot" style="background:var(--c-onb)"></span>
+        <span class="tl-name">onboarding_events</span>
+        <span class="tl-count">9</span>
+      </div>
+      <div class="tl-item" onclick="selectTable('name_badges')" data-table="name_badges">
+        <span class="tl-dot" style="background:var(--c-badge)"></span>
+        <span class="tl-name">name_badges</span>
+        <span class="tl-count">9</span>
+      </div>
+      <div class="tl-item" onclick="selectTable('meetings')" data-table="meetings">
+        <span class="tl-dot" style="background:var(--c-meet)"></span>
+        <span class="tl-name">meetings</span>
+        <span class="tl-count">11</span>
+      </div>
+      <div class="tl-item" onclick="selectTable('meeting_invites')" data-table="meeting_invites">
+        <span class="tl-dot" style="background:var(--c-inv)"></span>
+        <span class="tl-name">meeting_invites</span>
+        <span class="tl-count">8</span>
+      </div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">Use Cases</div>
+    <div class="uc-list">
+      <div class="uc-item" onclick="showOverview()">
+        <span class="uc-emoji">🎉</span>
+        <span class="uc-label">Chào mừng nhân sự mới</span>
+      </div>
+      <div class="uc-item" onclick="showOverview()">
+        <span class="uc-emoji">🪪</span>
+        <span class="uc-label">In bảng tên</span>
+      </div>
+      <div class="uc-item" onclick="showOverview()">
+        <span class="uc-emoji">⏱</span>
+        <span class="uc-label">Báo cáo chấm công</span>
+      </div>
+      <div class="uc-item" onclick="showOverview()">
+        <span class="uc-emoji">📅</span>
+        <span class="uc-label">Mời họp sáng thứ 2</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="topbarTitle">Overview</div>
+        <div class="breadcrumb" id="breadcrumb">
+          <span>hr_db</span>
+        </div>
+      </div>
+      <div class="topbar-tabs">
+        <button class="tab-btn active" id="tab-overview" onclick="switchTab('overview')">Overview</button>
+        <button class="tab-btn" id="tab-fields" onclick="switchTab('fields')">Fields</button>
+        <button class="tab-btn" id="tab-sql" onclick="switchTab('sql')">SQL</button>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content" id="content">
+
+      <!-- OVERVIEW PANEL -->
+      <div class="overview visible" id="panel-overview">
+
+        <div class="stats-bar">
+          <div class="stat-card">
+            <div class="stat-num">8</div>
+            <div class="stat-label">Tables</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num">71</div>
+            <div class="stat-label">Total columns</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num">12</div>
+            <div class="stat-label">Foreign keys</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num">4</div>
+            <div class="stat-label">Use cases</div>
+          </div>
+        </div>
+
+        <!-- ERD DIAGRAM -->
+        <div class="erd-wrap">
+          <div class="erd-canvas" id="erdCanvas" style="height:560px;">
+            <svg class="erd-svg" id="erdSvg" width="100%" height="100%"></svg>
+
+            <div class="erd-table" id="erd-employees" style="left:300px;top:20px;border-color:var(--c-emp)" onclick="selectTable('employees')">
+              <div class="erd-th" style="background:var(--c-emp)"><span class="erd-th-icon">👤</span>employees</div>
+              <div class="erd-field pk">🔑 employee_id</div>
+              <div class="erd-field">employee_code</div>
+              <div class="erd-field">full_name</div>
+              <div class="erd-field fk">🔗 department_id</div>
+              <div class="erd-field fk">🔗 position_id</div>
+              <div class="erd-field">start_date</div>
+              <div class="erd-field">is_dept_head</div>
+            </div>
+
+            <div class="erd-table" id="erd-departments" style="left:20px;top:20px;border-color:var(--c-dept)" onclick="selectTable('departments')">
+              <div class="erd-th" style="background:var(--c-dept)"><span class="erd-th-icon">🏢</span>departments</div>
+              <div class="erd-field pk">🔑 department_id</div>
+              <div class="erd-field">dept_code</div>
+              <div class="erd-field">dept_name</div>
+              <div class="erd-field fk">🔗 head_employee_id</div>
+            </div>
+
+            <div class="erd-table" id="erd-positions" style="left:560px;top:20px;border-color:var(--c-pos)" onclick="selectTable('positions')">
+              <div class="erd-th" style="background:var(--c-pos)"><span class="erd-th-icon">🎯</span>positions</div>
+              <div class="erd-field pk">🔑 position_id</div>
+              <div class="erd-field">position_name</div>
+              <div class="erd-field">position_name_en</div>
+              <div class="erd-field">level</div>
+            </div>
+
+            <div class="erd-table" id="erd-attendance_logs" style="left:20px;top:230px;border-color:var(--c-att)" onclick="selectTable('attendance_logs')">
+              <div class="erd-th" style="background:var(--c-att)"><span class="erd-th-icon">⏱</span>attendance_logs</div>
+              <div class="erd-field pk">🔑 log_id</div>
+              <div class="erd-field fk">🔗 employee_id</div>
+              <div class="erd-field">log_date</div>
+              <div class="erd-field">check_in</div>
+              <div class="erd-field">status</div>
+              <div class="erd-field">source</div>
+            </div>
+
+            <div class="erd-table" id="erd-onboarding_events" style="left:300px;top:310px;border-color:var(--c-onb)" onclick="selectTable('onboarding_events')">
+              <div class="erd-th" style="background:var(--c-onb)"><span class="erd-th-icon">🎉</span>onboarding_events</div>
+              <div class="erd-field pk">🔑 event_id</div>
+              <div class="erd-field fk">🔗 employee_id</div>
+              <div class="erd-field">event_date</div>
+              <div class="erd-field">status</div>
+            </div>
+
+            <div class="erd-table" id="erd-name_badges" style="left:560px;top:230px;border-color:var(--c-badge)" onclick="selectTable('name_badges')">
+              <div class="erd-th" style="background:var(--c-badge)"><span class="erd-th-icon">🪪</span>name_badges</div>
+              <div class="erd-field pk">🔑 badge_id</div>
+              <div class="erd-field fk">🔗 employee_id</div>
+              <div class="erd-field">badge_name</div>
+              <div class="erd-field">print_status</div>
+            </div>
+
+            <div class="erd-table" id="erd-meetings" style="left:760px;top:20px;border-color:var(--c-meet)" onclick="selectTable('meetings')">
+              <div class="erd-th" style="background:var(--c-meet)"><span class="erd-th-icon">📅</span>meetings</div>
+              <div class="erd-field pk">🔑 meeting_id</div>
+              <div class="erd-field">title</div>
+              <div class="erd-field">recurrence_rule</div>
+              <div class="erd-field">invite_rule</div>
+              <div class="erd-field">scheduled_at</div>
+            </div>
+
+            <div class="erd-table" id="erd-meeting_invites" style="left:760px;top:260px;border-color:var(--c-inv)" onclick="selectTable('meeting_invites')">
+              <div class="erd-th" style="background:var(--c-inv)"><span class="erd-th-icon">✉️</span>meeting_invites</div>
+              <div class="erd-field pk">🔑 invite_id</div>
+              <div class="erd-field fk">🔗 meeting_id</div>
+              <div class="erd-field fk">🔗 employee_id</div>
+              <div class="erd-field">rsvp_status</div>
+            </div>
+
+          </div><!-- erd-canvas -->
+        </div><!-- erd-wrap -->
+
+        <!-- USE CASE MAP -->
+        <div class="section-label">Use Case → Table Mapping</div>
+        <div class="uc-map-grid">
+          <div class="uc-map-card" style="border-left-color:var(--c-onb)" onclick="selectTable('onboarding_events')">
+            <div class="uc-map-title"><span>🎉</span> Chào mừng nhân sự mới</div>
+            <div class="uc-map-tables">
+              <span class="uc-map-chip">employees</span>
+              <span class="uc-map-chip">onboarding_events</span>
+              <span class="uc-map-chip">departments</span>
+            </div>
+          </div>
+          <div class="uc-map-card" style="border-left-color:var(--c-badge)" onclick="selectTable('name_badges')">
+            <div class="uc-map-title"><span>🪪</span> In bảng tên</div>
+            <div class="uc-map-tables">
+              <span class="uc-map-chip">name_badges</span>
+              <span class="uc-map-chip">employees</span>
+              <span class="uc-map-chip">positions</span>
+              <span class="uc-map-chip">departments</span>
+            </div>
+          </div>
+          <div class="uc-map-card" style="border-left-color:var(--c-att)" onclick="selectTable('attendance_logs')">
+            <div class="uc-map-title"><span>⏱</span> Báo cáo chấm công hàng ngày</div>
+            <div class="uc-map-tables">
+              <span class="uc-map-chip">attendance_logs</span>
+              <span class="uc-map-chip">employees</span>
+              <span class="uc-map-chip">departments</span>
+            </div>
+          </div>
+          <div class="uc-map-card" style="border-left-color:var(--c-meet)" onclick="selectTable('meetings')">
+            <div class="uc-map-title"><span>📅</span> Mời họp sáng thứ 2 — Trưởng phòng</div>
+            <div class="uc-map-tables">
+              <span class="uc-map-chip">meetings</span>
+              <span class="uc-map-chip">meeting_invites</span>
+              <span class="uc-map-chip">employees</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- panel-overview -->
+
+      <!-- FIELDS PANEL -->
+      <div class="table-detail" id="panel-fields">
+        <div class="empty-state" id="fields-empty">
+          <div class="big">←</div>
+          <p>Chọn một table từ sidebar để xem chi tiết</p>
+        </div>
+        <div id="fields-content" style="display:none"></div>
+      </div>
+
+      <!-- SQL PANEL -->
+      <div class="sql-view" id="panel-sql">
+        <div class="sql-block">
+          <div class="sql-block-header">
+            <div class="sql-block-title">
+              <span class="sql-dot" style="background:#dc2626"></span>
+              <span class="sql-dot" style="background:#f59e0b"></span>
+              <span class="sql-dot" style="background:#10b981"></span>
+              &nbsp; Query 1 — Số lượng nhân viên theo phòng ban
+            </div>
+            <button class="copy-btn" onclick="copySQL(0)">Copy</button>
+          </div>
+<pre id="sql0"><span class="kw">SELECT</span>
+    d.dept_code,
+    d.dept_name,
+    <span class="fn">COUNT</span>(e.employee_id)      <span class="kw">AS</span> total_employees,
+    <span class="fn">SUM</span>(e.is_department_head) <span class="kw">AS</span> total_heads
+<span class="kw">FROM</span> departments d
+<span class="kw">LEFT JOIN</span> employees e
+       <span class="kw">ON</span> e.department_id = d.department_id
+      <span class="kw">AND</span> e.status = <span class="str">'active'</span>
+<span class="kw">WHERE</span> d.is_active = <span class="num">TRUE</span>
+<span class="kw">GROUP BY</span> d.department_id, d.dept_code, d.dept_name
+<span class="kw">ORDER BY</span> total_employees <span class="kw">DESC</span>;</pre>
+        </div>
+
+        <div class="sql-block">
+          <div class="sql-block-header">
+            <div class="sql-block-title">
+              <span class="sql-dot" style="background:#dc2626"></span>
+              <span class="sql-dot" style="background:#f59e0b"></span>
+              <span class="sql-dot" style="background:#10b981"></span>
+              &nbsp; Query 2 — Nhân viên đi trễ ngày đi làm thứ 2
+            </div>
+            <button class="copy-btn" onclick="copySQL(1)">Copy</button>
+          </div>
+<pre id="sql1"><span class="kw">WITH</span> working_days <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        al.employee_id,
+        al.log_date,
+        al.check_in,
+        al.status,
+        <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (
+            <span class="kw">PARTITION BY</span> al.employee_id
+            <span class="kw">ORDER BY</span> al.log_date <span class="kw">ASC</span>
+        ) <span class="kw">AS</span> day_number
+    <span class="kw">FROM</span> attendance_logs al
+    <span class="kw">JOIN</span> employees e <span class="kw">ON</span> e.employee_id = al.employee_id
+    <span class="kw">WHERE</span> al.log_date >= e.start_date
+)
+
+<span class="kw">SELECT</span>
+    e.employee_code,
+    e.full_name,
+    d.dept_name,
+    p.position_name,
+    wd.log_date     <span class="kw">AS</span> second_day_date,
+    wd.check_in     <span class="kw">AS</span> check_in_time,
+    wd.status
+<span class="kw">FROM</span> working_days wd
+<span class="kw">JOIN</span> employees   e <span class="kw">ON</span> e.employee_id   = wd.employee_id
+<span class="kw">JOIN</span> departments d <span class="kw">ON</span> d.department_id = e.department_id
+<span class="kw">JOIN</span> positions   p <span class="kw">ON</span> p.position_id   = e.position_id
+<span class="kw">WHERE</span> wd.day_number = <span class="num">2</span>
+  <span class="kw">AND</span> wd.status     = <span class="str">'late'</span>
+<span class="kw">ORDER BY</span> d.dept_name, e.full_name;</pre>
+        </div>
+
+        <div class="sql-block">
+          <div class="sql-block-header">
+            <div class="sql-block-title">
+              <span class="sql-dot" style="background:#dc2626"></span>
+              <span class="sql-dot" style="background:#f59e0b"></span>
+              <span class="sql-dot" style="background:#10b981"></span>
+              &nbsp; Bonus — Tự tính trễ từ giờ check-in (08:30)
+            </div>
+            <button class="copy-btn" onclick="copySQL(2)">Copy</button>
+          </div>
+<pre id="sql2"><span class="kw">WITH</span> working_days <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        al.employee_id,
+        al.log_date,
+        al.check_in,
+        <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (
+            <span class="kw">PARTITION BY</span> al.employee_id
+            <span class="kw">ORDER BY</span> al.log_date <span class="kw">ASC</span>
+        ) <span class="kw">AS</span> day_number
+    <span class="kw">FROM</span> attendance_logs al
+    <span class="kw">JOIN</span> employees e <span class="kw">ON</span> e.employee_id = al.employee_id
+    <span class="kw">WHERE</span> al.log_date  >= e.start_date
+      <span class="kw">AND</span> al.check_in  <span class="kw">IS NOT NULL</span>
+)
+
+<span class="kw">SELECT</span>
+    e.employee_code,
+    e.full_name,
+    d.dept_name,
+    wd.log_date                              <span class="kw">AS</span> second_day_date,
+    <span class="fn">TIME</span>(wd.check_in)                        <span class="kw">AS</span> check_in_time,
+    <span class="fn">TIMEDIFF</span>(<span class="fn">TIME</span>(wd.check_in), <span class="str">'08:30:00'</span>) <span class="kw">AS</span> late_by
+<span class="kw">FROM</span> working_days wd
+<span class="kw">JOIN</span> employees   e <span class="kw">ON</span> e.employee_id   = wd.employee_id
+<span class="kw">JOIN</span> departments d <span class="kw">ON</span> d.department_id = e.department_id
+<span class="kw">WHERE</span> wd.day_number         = <span class="num">2</span>
+  <span class="kw">AND</span> <span class="fn">TIME</span>(wd.check_in) > <span class="str">'08:30:00'</span>
+<span class="kw">ORDER BY</span> late_by <span class="kw">DESC</span>;</pre>
+        </div>
+      </div>
+
+    </div><!-- content -->
+  </div><!-- main -->
+</div><!-- app -->
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────
+const TABLES = {
+  employees: {
+    icon:'👤', color:'var(--c-emp)',
+    desc:'Bảng trung tâm chứa thông tin toàn bộ nhân viên.',
+    fields: [
+      {key:'PK', name:'employee_id',       type:'INT',          nn:true,  note:'Auto increment'},
+      {key:'UQ', name:'employee_code',     type:'VARCHAR(20)',  nn:true,  note:'Unique mã NV'},
+      {key:'',   name:'full_name',         type:'VARCHAR(100)', nn:true,  note:''},
+      {key:'',   name:'display_name',      type:'VARCHAR(60)',  nn:false, note:'Dùng in bảng tên'},
+      {key:'UQ', name:'email',             type:'VARCHAR(120)', nn:true,  note:'Unique'},
+      {key:'',   name:'phone',             type:'VARCHAR(20)',  nn:false, note:''},
+      {key:'FK', name:'department_id',     type:'INT',          nn:false, note:'→ departments', ref:'departments'},
+      {key:'FK', name:'position_id',       type:'INT',          nn:false, note:'→ positions', ref:'positions'},
+      {key:'IDX',name:'start_date',        type:'DATE',         nn:true,  note:'Ngày đầu đi làm'},
+      {key:'',   name:'is_department_head',type:'BOOLEAN',      nn:false, note:'DEFAULT false'},
+      {key:'',   name:'status',            type:"ENUM('active','inactive')", nn:false, note:''},
+      {key:'',   name:'avatar_url',        type:'TEXT',         nn:false, note:'Ảnh cho badge'},
+      {key:'',   name:'created_at',        type:'TIMESTAMP',    nn:false, note:'DEFAULT NOW()'},
+    ],
+    relations: [
+      {type:'N:1', to:'departments', label:'N nhân viên → 1 phòng ban'},
+      {type:'N:1', to:'positions',   label:'N nhân viên → 1 chức danh'},
+    ]
+  },
+  departments: {
+    icon:'🏢', color:'var(--c-dept)',
+    desc:'Danh sách phòng ban trong tổ chức.',
+    fields: [
+      {key:'PK', name:'department_id',   type:'INT',         nn:true,  note:''},
+      {key:'UQ', name:'dept_code',       type:'VARCHAR(10)', nn:true,  note:'Unique'},
+      {key:'',   name:'dept_name',       type:'VARCHAR(100)',nn:true,  note:''},
+      {key:'FK', name:'head_employee_id',type:'INT',         nn:false, note:'→ employees', ref:'employees'},
+      {key:'',   name:'description',     type:'TEXT',        nn:false, note:''},
+      {key:'',   name:'is_active',       type:'BOOLEAN',     nn:false, note:'DEFAULT true'},
+    ],
+    relations: [
+      {type:'1:N', to:'employees', label:'1 phòng ban ← N nhân viên'},
+    ]
+  },
+  positions: {
+    icon:'🎯', color:'var(--c-pos)',
+    desc:'Danh mục chức danh, dùng để in bảng tên.',
+    fields: [
+      {key:'PK', name:'position_id',      type:'INT',         nn:true, note:''},
+      {key:'',   name:'position_name',    type:'VARCHAR(100)',nn:true, note:'Tên tiếng Việt'},
+      {key:'',   name:'position_name_en', type:'VARCHAR(100)',nn:false,note:'In trên badge'},
+      {key:'',   name:'level',            type:"ENUM('staff','lead','manager')",nn:false,note:''},
+      {key:'',   name:'is_active',        type:'BOOLEAN',    nn:false, note:'DEFAULT true'},
+    ],
+    relations: [
+      {type:'1:N', to:'employees', label:'1 chức danh ← N nhân viên'},
+    ]
+  },
+  attendance_logs: {
+    icon:'⏱', color:'var(--c-att)',
+    desc:'Dữ liệu chấm công — nhận sync từ máy chấm công bên ngoài qua API.',
+    fields: [
+      {key:'PK', name:'log_id',     type:'BIGINT',  nn:true, note:'Auto increment'},
+      {key:'FK', name:'employee_id',type:'INT',     nn:true, note:'→ employees', ref:'employees'},
+      {key:'IDX',name:'log_date',   type:'DATE',    nn:true, note:''},
+      {key:'',   name:'check_in',   type:'DATETIME',nn:false,note:''},
+      {key:'',   name:'check_out',  type:'DATETIME',nn:false,note:''},
+      {key:'',   name:'device_id',  type:'VARCHAR(50)',nn:false,note:'ID máy chấm công'},
+      {key:'',   name:'source',     type:"ENUM('device','manual','api')",nn:false,note:''},
+      {key:'',   name:'status',     type:"ENUM('on_time','late','absent')",nn:false,note:''},
+      {key:'',   name:'note',       type:'VARCHAR(255)',nn:false,note:''},
+      {key:'',   name:'synced_at',  type:'TIMESTAMP',nn:false,note:'Thời điểm sync'},
+    ],
+    relations: [
+      {type:'N:1', to:'employees', label:'N log → 1 nhân viên'},
+    ]
+  },
+  onboarding_events: {
+    icon:'🎉', color:'var(--c-onb)',
+    desc:'Sự kiện chào mừng nhân sự mới vào ngày đầu đi làm.',
+    fields: [
+      {key:'PK', name:'event_id',       type:'INT',        nn:true, note:''},
+      {key:'FK', name:'employee_id',    type:'INT',        nn:true, note:'→ employees', ref:'employees'},
+      {key:'',   name:'event_date',     type:'DATE',       nn:true, note:'= start_date của NV'},
+      {key:'',   name:'event_time',     type:'TIME',       nn:false,note:'Giờ tổ chức'},
+      {key:'',   name:'location',       type:'VARCHAR(100)',nn:false,note:''},
+      {key:'',   name:'welcome_message',type:'TEXT',       nn:false,note:''},
+      {key:'',   name:'status',         type:"ENUM('pending','done','skip')",nn:false,note:''},
+      {key:'FK', name:'organized_by',   type:'INT',        nn:false,note:'→ employees (HR)', ref:'employees'},
+      {key:'',   name:'created_at',     type:'TIMESTAMP',  nn:false,note:''},
+    ],
+    relations: [
+      {type:'1:1', to:'employees', label:'1 event → 1 nhân viên mới'},
+    ]
+  },
+  name_badges: {
+    icon:'🪪', color:'var(--c-badge)',
+    desc:'Thông tin bảng tên in cho nhân sự mới.',
+    fields: [
+      {key:'PK', name:'badge_id',   type:'INT',         nn:true, note:''},
+      {key:'FK', name:'employee_id',type:'INT',         nn:true, note:'→ employees', ref:'employees'},
+      {key:'',   name:'badge_name', type:'VARCHAR(60)', nn:false,note:'Tên in trên badge'},
+      {key:'',   name:'title_line', type:'VARCHAR(100)',nn:false,note:'Chức danh in'},
+      {key:'',   name:'dept_line',  type:'VARCHAR(100)',nn:false,note:'Phòng ban in'},
+      {key:'',   name:'template_id',type:'INT',         nn:false,note:'Mẫu thiết kế'},
+      {key:'',   name:'print_status',type:"ENUM('pending','printed')",nn:false,note:''},
+      {key:'',   name:'printed_at', type:'TIMESTAMP',  nn:false,note:''},
+      {key:'FK', name:'printed_by', type:'INT',         nn:false,note:'→ employees (HR)', ref:'employees'},
+    ],
+    relations: [
+      {type:'1:1', to:'employees', label:'1 badge → 1 nhân viên'},
+    ]
+  },
+  meetings: {
+    icon:'📅', color:'var(--c-meet)',
+    desc:'Cuộc họp định kỳ — hỗ trợ recurrence rule để lặp tự động.',
+    fields: [
+      {key:'PK', name:'meeting_id',      type:'INT',        nn:true, note:''},
+      {key:'',   name:'title',           type:'VARCHAR(200)',nn:true,note:''},
+      {key:'',   name:'meeting_type',    type:"ENUM('weekly','monthly','ad-hoc')",nn:false,note:''},
+      {key:'',   name:'recurrence_rule', type:'VARCHAR(100)',nn:false,note:"'MON 08:00 WEEKLY'"},
+      {key:'',   name:'scheduled_at',    type:'DATETIME',   nn:true, note:''},
+      {key:'',   name:'duration_min',    type:'INT',        nn:false,note:'Số phút họp'},
+      {key:'',   name:'location',        type:'VARCHAR(100)',nn:false,note:''},
+      {key:'',   name:'invite_rule',     type:"ENUM('all','heads_only','dept')",nn:false,note:''},
+      {key:'',   name:'agenda',          type:'TEXT',       nn:false,note:''},
+      {key:'FK', name:'created_by',      type:'INT',        nn:false,note:'→ employees', ref:'employees'},
+      {key:'',   name:'status',          type:"ENUM('scheduled','done','cancel')",nn:false,note:''},
+    ],
+    relations: [
+      {type:'M:N', to:'employees', label:'qua meeting_invites'},
+    ]
+  },
+  meeting_invites: {
+    icon:'✉️', color:'var(--c-inv)',
+    desc:'Bảng junction — lưu danh sách khách mời cho từng cuộc họp.',
+    fields: [
+      {key:'PK', name:'invite_id',    type:'INT',      nn:true, note:''},
+      {key:'FK', name:'meeting_id',   type:'INT',      nn:true, note:'→ meetings', ref:'meetings'},
+      {key:'FK', name:'employee_id',  type:'INT',      nn:true, note:'→ employees', ref:'employees'},
+      {key:'',   name:'role',         type:"ENUM('organizer','invitee')",nn:false,note:''},
+      {key:'',   name:'invite_sent_at',type:'TIMESTAMP',nn:false,note:''},
+      {key:'',   name:'rsvp_status',  type:"ENUM('pending','yes','no','maybe')",nn:false,note:''},
+      {key:'',   name:'rsvp_at',      type:'TIMESTAMP',nn:false,note:''},
+      {key:'UQ', name:'UNIQUE',       type:'',         nn:false,note:'(meeting_id, employee_id)'},
+    ],
+    relations: [
+      {type:'N:1', to:'meetings',  label:'N invites → 1 meeting'},
+      {type:'N:1', to:'employees', label:'N invites → 1 nhân viên'},
+    ]
+  },
+};
+
+let currentTable = null;
+let currentTab = 'overview';
+
+function selectTable(name) {
+  currentTable = name;
+  // update sidebar
+  document.querySelectorAll('.tl-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.table === name);
+  });
+  const t = TABLES[name];
+  document.getElementById('topbarTitle').textContent = name;
+  document.getElementById('breadcrumb').innerHTML = `<span>hr_db</span> / <span style="color:var(--text);font-weight:600">${name}</span>`;
+  // show fields tab
+  switchTab('fields');
+  renderFields(name);
+}
+
+function renderFields(name) {
+  const t = TABLES[name];
+  const el = document.getElementById('fields-content');
+  document.getElementById('fields-empty').style.display = 'none';
+  el.style.display = 'block';
+
+  const relHTML = t.relations.map(r => {
+    let cls = r.type === 'N:1' ? 'rel-n1' : r.type === '1:N' ? 'rel-1n' : r.type === '1:1' ? 'rel-11' : 'rel-mn';
+    return `<div class="rel-chip" onclick="selectTable('${r.to}')">
+      <span class="rel-chip-type ${cls}">${r.type}</span>
+      <span style="font-size:12px">${r.label}</span>
+      <span style="color:var(--muted);font-size:11px;font-family:'JetBrains Mono',monospace">→ ${r.to}</span>
+    </div>`;
+  }).join('');
+
+  const rowsHTML = t.fields.map(f => {
+    let keyBadge = '';
+    if (f.key === 'PK')  keyBadge = '<span class="key-badge key-pk">PK</span>';
+    else if (f.key === 'FK')  keyBadge = '<span class="key-badge key-fk">FK</span>';
+    else if (f.key === 'IDX') keyBadge = '<span class="key-badge key-idx">IDX</span>';
+    else if (f.key === 'UQ')  keyBadge = '<span class="key-badge key-uq">UQ</span>';
+
+    let refHTML = '';
+    if (f.ref) refHTML = `<span class="ref-link" onclick="event.stopPropagation();selectTable('${f.ref}')">→ ${f.ref}</span>`;
+
+    return `<tr>
+      <td>${keyBadge}</td>
+      <td class="field-name-cell">${f.name}</td>
+      <td class="field-type-cell">${f.type}</td>
+      <td>${f.nn ? '<span class="field-nn">NOT NULL</span>' : '<span style="color:var(--muted2);font-size:11px">nullable</span>'}</td>
+      <td class="field-note-cell">${refHTML} ${f.note}</td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="td-header">
+      <div class="td-icon" style="background:${t.color}22">${t.icon}</div>
+      <div class="td-info">
+        <div class="td-name" style="color:${t.color}">${name}</div>
+        <div class="td-meta">${t.desc}</div>
+      </div>
+    </div>
+    <div class="section-label">Columns (${t.fields.length})</div>
+    <table class="fields-table">
+      <thead><tr>
+        <th>Key</th><th>Column</th><th>Type</th><th>Null</th><th>Note</th>
+      </tr></thead>
+      <tbody>${rowsHTML}</tbody>
+    </table>
+    <div class="section-label">Relations</div>
+    <div class="rel-chips">${relHTML}</div>
+  `;
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+
+  document.getElementById('panel-overview').classList.remove('visible');
+  document.getElementById('panel-fields').classList.remove('visible');
+  document.getElementById('panel-sql').classList.remove('visible');
+  document.getElementById('panel-' + tab).classList.add('visible');
+
+  if (tab === 'overview') {
+    document.querySelectorAll('.tl-item').forEach(el => el.classList.remove('active'));
+    document.getElementById('topbarTitle').textContent = 'Overview';
+    document.getElementById('breadcrumb').innerHTML = '<span>hr_db</span>';
+  }
+}
+
+function showOverview() { switchTab('overview'); }
+
+const SQL_RAW = [
+  `SELECT d.dept_code, d.dept_name, COUNT(e.employee_id) AS total_employees, SUM(e.is_department_head) AS total_heads FROM departments d LEFT JOIN employees e ON e.department_id = d.department_id AND e.status = 'active' WHERE d.is_active = TRUE GROUP BY d.department_id, d.dept_code, d.dept_name ORDER BY total_employees DESC;`,
+  `WITH working_days AS ( SELECT al.employee_id, al.log_date, al.check_in, al.status, ROW_NUMBER() OVER (PARTITION BY al.employee_id ORDER BY al.log_date ASC) AS day_number FROM attendance_logs al JOIN employees e ON e.employee_id = al.employee_id WHERE al.log_date >= e.start_date ) SELECT e.employee_code, e.full_name, d.dept_name, p.position_name, wd.log_date AS second_day_date, wd.check_in AS check_in_time, wd.status FROM working_days wd JOIN employees e ON e.employee_id = wd.employee_id JOIN departments d ON d.department_id = e.department_id JOIN positions p ON p.position_id = e.position_id WHERE wd.day_number = 2 AND wd.status = 'late' ORDER BY d.dept_name, e.full_name;`,
+  `WITH working_days AS ( SELECT al.employee_id, al.log_date, al.check_in, ROW_NUMBER() OVER (PARTITION BY al.employee_id ORDER BY al.log_date ASC) AS day_number FROM attendance_logs al JOIN employees e ON e.employee_id = al.employee_id WHERE al.log_date >= e.start_date AND al.check_in IS NOT NULL ) SELECT e.employee_code, e.full_name, d.dept_name, wd.log_date AS second_day_date, TIME(wd.check_in) AS check_in_time, TIMEDIFF(TIME(wd.check_in), '08:30:00') AS late_by FROM working_days wd JOIN employees e ON e.employee_id = wd.employee_id JOIN departments d ON d.department_id = e.department_id WHERE wd.day_number = 2 AND TIME(wd.check_in) > '08:30:00' ORDER BY late_by DESC;`
+];
+
+function copySQL(idx) {
+  navigator.clipboard.writeText(SQL_RAW[idx]).then(() => {
+    const btn = document.querySelectorAll('.copy-btn')[idx];
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+  });
+}
+
+// Draw ERD connections
+function drawConnections() {
+  const canvas = document.getElementById('erdCanvas');
+  const svg = document.getElementById('erdSvg');
+  svg.style.width  = canvas.scrollWidth  + 'px';
+  svg.style.height = canvas.scrollHeight + 'px';
+
+  const connections = [
+    ['erd-employees','erd-departments', '#0f9e6e'],
+    ['erd-employees','erd-positions',   '#d97706'],
+    ['erd-attendance_logs','erd-employees','#dc2626'],
+    ['erd-onboarding_events','erd-employees','#7c3aed'],
+    ['erd-name_badges','erd-employees', '#be185d'],
+    ['erd-meeting_invites','erd-meetings','#0891b2'],
+    ['erd-meeting_invites','erd-employees','#059669'],
+  ];
+
+  svg.innerHTML = '';
+  connections.forEach(([fromId, toId, color]) => {
+    const from = document.getElementById(fromId);
+    const to   = document.getElementById(toId);
+    if (!from || !to) return;
+    const fr = from.getBoundingClientRect();
+    const tr = to.getBoundingClientRect();
+    const cr = canvas.getBoundingClientRect();
+    const x1 = fr.left - cr.left + fr.width / 2;
+    const y1 = fr.top  - cr.top  + fr.height / 2;
+    const x2 = tr.left - cr.left + tr.width / 2;
+    const y2 = tr.top  - cr.top  + tr.height / 2;
+    const mx = (x1 + x2) / 2;
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`);
+    path.setAttribute('fill','none');
+    path.setAttribute('stroke', color);
+    path.setAttribute('stroke-width','1.5');
+    path.setAttribute('stroke-opacity','0.35');
+    path.setAttribute('stroke-dasharray','4 3');
+    svg.appendChild(path);
+  });
+}
+
+setTimeout(drawConnections, 100);
+window.addEventListener('resize', drawConnections);
+</script>
+</body>
+</html>
